@@ -1,0 +1,7 @@
+/app_tauri/node_modules
+/app_tauri/dist
+/app_tauri/src-tauri/target
+/app_tauri/src-tauri/gen/schemas
+/source/base_template/cpp/source/.vs
+/source/base_template/cpp/source/out
+/source/base_template/rust/target
