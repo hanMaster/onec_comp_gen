@@ -10,6 +10,8 @@
 npm run tauri build
 ```
 Собранные файлы в каталоге `onec_comp_gen\app_tauri\src-tauri\target\release` 
+## Использование
+Скопировать собранный исполняемый файл из каталога `onec_comp_gen\app_tauri\src-tauri\target\release` в каталог `onec_comp_gen\source` и запустить
 
 Статья на infostart.ru https://infostart.ru/1c/2252892/
 
