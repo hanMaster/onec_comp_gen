@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "onec_comp_gen",
-  "version": "0.1.0",
+  "version": "0.51.0",
   "identifier": "com.onec.comp.gen.app",
   "build": {
     "beforeDevCommand": "npm run dev",
@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "onec_comp_gen",
+        "title": "onec_comp_gen v.0.51.beta",
         "width": 800,
         "height": 600
       }
