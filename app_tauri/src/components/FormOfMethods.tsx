@@ -10,9 +10,11 @@ import {
   Modal,
   Select,
   Table,
+  Tooltip,
 } from "@mantine/core";
 import useStore, { Params } from "../store";
 import IconAdd from "./IconAdd";
+import IconTrash from "./IconTrash";
 
 interface Props {
   open: boolean;
@@ -149,6 +151,10 @@ export default function FormOfMethods({
     );
   }
 
+  function DeleteParam(uuid: string): void {
+    setParams(params.filter((param) => param.uuid !== uuid));
+  }
+
   return (
     <Modal
       opened={open}
@@ -195,6 +201,7 @@ export default function FormOfMethods({
           <Table.Tr>
             <Table.Th>Имя</Table.Th>
             <Table.Th>Тип</Table.Th>
+            <Table.Th></Table.Th>
           </Table.Tr>
         </Table.Thead>
         <Table.Tbody>
@@ -215,6 +222,20 @@ export default function FormOfMethods({
                   }}
                   data={["string", "number", "bool"]}
                 ></Select>
+              </Table.Td>
+              <Table.Td>
+                <Tooltip label="Удалить строку">
+                  <ActionIcon
+                    variant="transparent"
+                    color="red"
+                    size={"sm"}
+                    onClick={() => {
+                      DeleteParam(i.uuid);
+                    }}
+                  >
+                    <IconTrash />
+                  </ActionIcon>
+                </Tooltip>
               </Table.Td>
             </Table.Tr>
           ))}

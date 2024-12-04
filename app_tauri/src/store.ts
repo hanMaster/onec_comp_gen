@@ -31,6 +31,7 @@ interface State {
   saveMethod: (method: Method) => void;
   addProp: (prop: Props) => void;
   deleteMethod: (uuid: string) => void;
+  deleteParam: (methodUuid: string, paramUuid: string) => void;
 }
 
 const useStore = create<State>()((set) => ({
@@ -45,6 +46,17 @@ const useStore = create<State>()((set) => ({
   addProp: (prop: Props) => set((state) => ({ props: [...state.props, prop] })),
   deleteMethod: (uuid: string) =>
     set((state) => ({ methods: state.methods.filter((m) => m.uuid !== uuid) })),
+  deleteParam: (methodUuid: string, paramUuid: string) =>
+    set((state) => ({
+      methods: state.methods.map((method) =>
+        method.uuid === methodUuid
+          ? {
+              ...method,
+              params: method.params.filter((param) => param.uuid !== paramUuid),
+            }
+          : method
+      ),
+    })),
 }));
 
 export default useStore;
