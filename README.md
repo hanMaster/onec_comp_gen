@@ -19,4 +19,4 @@ npm run tauri build
 
 [Видео инструкция для конструктора](https://t.me/FastAbout1s/69)
 
-[Общая методика разработки внешний компонент по технологи native api (видео)](https://t.me/FastAbout1s/51)
+[Общая методика разработки внешних компонент по технологи native api (видео)](https://t.me/FastAbout1s/51)
