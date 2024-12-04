@@ -327,7 +327,7 @@ fn copy_rs_files_for_each_method(dist: &String, state: &State) -> io::Result<()>
             });
             let new_text = format!(
                 r#"pub extern "C" fn main({}) -> *const c_char {{
-    str_to_cchar("returder value from rust")
+    str_to_cchar("returned value from rust")
 }}"#,
                 params.join(", ")
             );
