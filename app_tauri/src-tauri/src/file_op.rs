@@ -50,3 +50,7 @@ pub fn replace_text_in_file_regex(file_path: &String, pattern: &str, new_text: &
     
     Ok(())
 }
+
+pub fn exists_base_template(file_path: String) -> bool {
+    Path::new(&file_path).exists()
+}

@@ -1,7 +1,7 @@
 mod dto;
 mod file_op;
 use dto::{Method, State};
-use file_op::{copy_directory, replace_text_in_file, replace_text_in_file_regex};
+use file_op::{copy_directory, replace_text_in_file, replace_text_in_file_regex, exists_base_template};
 use std::{env, fs, io, vec};
 use tauri::http::method;
 
@@ -424,6 +424,11 @@ fn build(path: &str, state: &str) -> String {
             return e.to_string();
         }
     };
+
+    let source = path.to_owned() + "\\base_template";
+    if !exists_base_template(source.to_string()){
+        return "В каталоге с конструтором должен находится каталог base_template. Это базой шаблон. Он не найден. Скопируйте его в этот каталог из релиза или из папки source в репозитории.".to_string();
+    }
 
     match copy_file_and_replace(path.to_string(), state_struct) {
         Ok(()) => "Завершилось успешно!".to_string(),
