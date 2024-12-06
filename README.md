@@ -15,6 +15,8 @@ npm run tauri build
 ## Использование
 Скопировать собранный исполняемый файл из каталога `onec_comp_gen\app_tauri\src-tauri\target\release` в каталог `onec_comp_gen\source` и запустить
 
-Статья на infostart.ru https://infostart.ru/1c/2252892/
+[Статья на infostart.ru](https://infostart.ru/1c/2252892/) [![Infostart](https://infostart.ru/bitrix/templates/sandbox_empty/assets/tpl/abo/img/logo.svg)](https://infostart.ru/1c/2252892/ "Статья на infostart.ru")
 
-Видео инструкция https://t.me/FastAbout1s/69
+[Видео инструкция для конструктора](https://t.me/FastAbout1s/69)
+
+[Общая методика разработки внешних компонент по технологи native api (видео)](https://t.me/FastAbout1s/51)
