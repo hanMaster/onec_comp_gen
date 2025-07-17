@@ -64,5 +64,15 @@ if (WIN32)
         Userenv
     )
 else()
-    target_link_libraries(AddInNative PRIVATE ${CMAKE_SOURCE_DIR}/../../rust/target/debug/rust_1c.a -static-libstdc++)
+    target_link_libraries(AddInNative PRIVATE ${CMAKE_SOURCE_DIR}/../../rust/target/debug/librust_1c.a -static-libstdc++)
 endif()
+
+# Integrate Rust build into the CMake build system
+add_custom_target(RustBuild ALL
+    COMMAND cargo build
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/../../rust/
+    COMMENT "Building Rust project with Cargo"
+)
+
+# Ensure that the Rust library is built before AddInNative
+add_dependencies(${PROJECT_NAME} RustBuild)
