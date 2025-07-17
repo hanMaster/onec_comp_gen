@@ -16,7 +16,7 @@ npm run tauri build
 Скопировать собранный исполняемый файл из каталога `onec_comp_gen\app_tauri\src-tauri\target\release` в каталог `onec_comp_gen\source` и запустить
 
 # Сборка компоненты под linux 
-В каталоге source выполнить
+В каталоге cpp/source выполнить
 ```
 cmake . && make
 ```
