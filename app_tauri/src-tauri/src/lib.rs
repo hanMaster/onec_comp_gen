@@ -228,7 +228,7 @@ fn fill_for_rust_header(file_path: &str, state: &State) -> io::Result<()> {
                     "bool" => format!("bool {}", param.name),
                     _ => unreachable!(),
                 })
-                .collect::<Vec<String>>()
+                .collect::<Vec<_>>()
                 .join(", ");
 
             format!(
@@ -303,21 +303,18 @@ fn copy_rs_files_for_each_method(dist: &str, state: &State) -> io::Result<()> {
         .iter()
         .filter(|method| method.call_rust_method)
         .map(|method| format!("mod impl_{};", method.name_eng))
-        .collect::<Vec<String>>()
+        .collect::<Vec<_>>()
         .join("\n");
 
     let file_path = format!("{dist}\\rust\\src\\lib.rs");
     replace_text_in_file(&file_path, "//ВставкаМодулей", &mods)?;
 
     //ВставкаМетодов
-
-    let mut methods: Vec<String> = vec![];
-
-    state
+    let methods = state
         .methods
         .iter()
         .filter(|method| method.call_rust_method)
-        .for_each(|method| {
+        .map(|method| {
             let params_without_types = method
                 .params
                 .iter()
@@ -327,18 +324,19 @@ fn copy_rs_files_for_each_method(dist: &str, state: &State) -> io::Result<()> {
 
             let params = params_with_types(method);
 
-            let code = format!(
+            format!(
                 r###"#[no_mangle]
 pub extern "C" fn {}__call_from_cpp({}) -> *const c_char {{
     impl_{}::main({})
 }}"###,
                 method.name_eng, params, method.name_eng, params_without_types,
-            );
-            methods.push(code);
-        });
+            )
+        })
+        .collect::<Vec<_>>()
+        .join("\n");
 
     let file_path = format!("{}\\rust\\src\\lib.rs", dist);
-    replace_text_in_file(&file_path, "//ВставкаМетодов", &methods.join("\n"))?;
+    replace_text_in_file(&file_path, "//ВставкаМетодов", &methods)?;
 
     Ok(())
 }
@@ -392,8 +390,8 @@ fn build(path: &str, state: &str) -> String {
 
     let source = format!("{path}\\base_template");
     if !exists_base_template(&source) {
-        return "В каталоге с конструктором должен находится каталог base_template. \
-        Это базой шаблон. Он не найден. \
+        return "В каталоге с конструктором не найден каталог base_template. \
+        Это базовый шаблон. \
         Скопируйте его в этот каталог из релиза или из папки source в репозитории."
             .to_string();
     }
