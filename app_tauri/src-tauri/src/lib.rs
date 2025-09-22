@@ -245,23 +245,21 @@ fn fill_for_rust_header(file_path: &str, state: &State) -> io::Result<()> {
 
 fn copy_cpp_files_for_each_method(dist: &str, state: &State) -> io::Result<()> {
     state.methods.iter().try_for_each(|method| {
+        // copy source files
         let source = format!("{dist}\\cpp\\source\\impl\\test.cpp");
-        let dist = format!("{dist}\\cpp\\source\\impl\\{}.cpp", method.name_eng);
-        println!("Copying file '{}' to '{}'...", source, dist);
-        fs::copy(source, &dist)?;
-        let method_name = method.name_eng.as_str().to_owned() + "(";
-        replace_text_in_file(&dist, "test(", &method_name)?;
-        fill_params_methods(&dist.to_string(), method)?;
-        Ok::<(), io::Error>(())
-    })?;
-
-    state.methods.iter().try_for_each(|method| {
-        let source = format!("{dist}\\cpp\\source\\impl\\test.h");
-        let dist = format!("{dist}\\cpp\\source\\impl\\{}.h", method.name_eng);
-        println!("Copying file '{}' to '{}'...", source, dist);
-        fs::copy(source, &dist)?;
+        let dist_src = format!("{dist}\\cpp\\source\\impl\\{}.cpp", method.name_eng);
+        println!("Copying file '{}' to '{}'...", source, dist_src);
+        fs::copy(source, &dist_src)?;
         let method_name = format!("{}(", method.name_eng);
-        replace_text_in_file(&dist, "test(", &method_name)?;
+        replace_text_in_file(&dist_src, "test(", &method_name)?;
+        fill_params_methods(&dist_src, method)?;
+        // copy header files
+        let source = format!("{dist}\\cpp\\source\\impl\\test.h");
+        let dist_headers = format!("{dist}\\cpp\\source\\impl\\{}.h", method.name_eng);
+        println!("Copying file '{}' to '{}'...", source, dist_headers);
+        fs::copy(source, &dist_headers)?;
+        let method_name = format!("{}(", method.name_eng);
+        replace_text_in_file(&dist_headers, "test(", &method_name)?;
         Ok::<(), io::Error>(())
     })?;
 
