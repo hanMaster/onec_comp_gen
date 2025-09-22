@@ -19,14 +19,14 @@ fn copy_base_template(source_dir: &str, destination_dir: &str) -> io::Result<()>
 }
 
 fn replace_in_class(dist: &str, state: &State) -> io::Result<()> {
-    let file_path = dist.to_owned() + "\\cpp\\source\\AddInNative.h";
+    let file_path = format!("{dist}\\cpp\\source\\AddInNative.h");
     let target_text = "//ДляВставкиМетодов";
 
     let methods_string = state
         .methods
         .iter()
-        .map(|method| format!("{}_enum", method.name_eng.as_str()))
-        .collect::<Vec<String>>()
+        .map(|method| format!("{}_enum", method.name_eng))
+        .collect::<Vec<_>>()
         .join(",\n\t\t")
         + ",";
 
@@ -36,14 +36,14 @@ fn replace_in_class(dist: &str, state: &State) -> io::Result<()> {
 }
 
 fn replace_in_make_file(dist: &str, state: &State) -> io::Result<()> {
-    let file_path = dist.to_owned() + "\\cpp\\source\\CMakeLists.txt";
+    let file_path = format!("{dist}\\cpp\\source\\CMakeLists.txt");
     let target_text = "#ВставкаCPPФайлов";
 
     let cpp_files_string = state
         .methods
         .iter()
-        .map(|method| "impl/".to_owned() + method.name_eng.as_str() + ".cpp")
-        .collect::<Vec<String>>()
+        .map(|method| format!("impl/{}.cpp", method.name_eng))
+        .collect::<Vec<_>>()
         .join("\n\t");
 
     replace_text_in_file(&file_path, target_text, &cpp_files_string)?;
@@ -58,21 +58,21 @@ fn replace_in_main_cpp(dist: &str, state: &State) -> io::Result<()> {
     let methods_string = state
         .methods
         .iter()
-        .map(|method| format!("L\"{}\"", method.name.as_str()))
-        .collect::<Vec<String>>()
+        .map(|method| format!("L\"{}\"", method.name))
+        .collect::<Vec<_>>()
         .join(",\n\t")
         + ",\n";
 
     replace_text_in_file(&file_path, target_text, &methods_string)?;
 
-    let file_path = dist.to_owned() + "\\cpp\\source\\AddInNative.cpp";
+    let file_path = format!("{dist}\\cpp\\source\\AddInNative.cpp");
     let target_text = "/*ФайлCPPМетодыНаАнглийскомЯзыке*/";
 
     let methods_string = state
         .methods
         .iter()
-        .map(|method| format!("L\"{}\"", method.name_eng.as_str()))
-        .collect::<Vec<String>>()
+        .map(|method| format!("L\"{}\"", method.name_eng))
+        .collect::<Vec<_>>()
         .join(",\n\t")
         + ",\n";
 
@@ -85,12 +85,12 @@ fn replace_in_main_cpp(dist: &str, state: &State) -> io::Result<()> {
         .iter()
         .map(|method| {
             format!(
-                "case {}: return {};",
-                format!("{}_enum", method.name_eng.as_str()),
+                "case {}_enum: return {};",
+                method.name_eng,
                 method.params.len()
             )
         })
-        .collect::<Vec<String>>()
+        .collect::<Vec<_>>()
         .join("\n\t");
 
     replace_text_in_file(&file_path, target_text, &methods_string)?;
@@ -102,12 +102,11 @@ fn replace_in_main_cpp(dist: &str, state: &State) -> io::Result<()> {
         .iter()
         .map(|method| {
             format!(
-                "case {}: return {};",
-                format!("{}_enum", method.name_eng.as_str()),
-                method.has_return
+                "case {}_enum: return {};",
+                method.name_eng, method.has_return
             )
         })
-        .collect::<Vec<String>>()
+        .collect::<Vec<_>>()
         .join("\n\t");
 
     replace_text_in_file(&file_path, target_text, &methods_string)?;
@@ -119,12 +118,12 @@ fn replace_in_main_cpp(dist: &str, state: &State) -> io::Result<()> {
         .iter()
         .map(|method| {
             format!(
-                "case {}: return {}(lMethodNum, pvarRetValue, paParams, lSizeArray, m_iMemory);",
-                format!("{}_enum", method.name_eng.as_str()),
-                method.name_eng.as_str()
+                "case {}_enum: return {}(lMethodNum, pvarRetValue, paParams, lSizeArray, m_iMemory);",
+                method.name_eng,
+                method.name_eng
             )
         })
-        .collect::<Vec<String>>()
+        .collect::<Vec<_>>()
         .join("\n\t");
 
     replace_text_in_file(&file_path, target_text, &methods_string)?;
@@ -134,8 +133,8 @@ fn replace_in_main_cpp(dist: &str, state: &State) -> io::Result<()> {
     let methods_string = state
         .methods
         .iter()
-        .map(|method| format!("#include \"impl/{}.h\"", method.name_eng.as_str()))
-        .collect::<Vec<String>>()
+        .map(|method| format!("#include \"impl/{}.h\"", method.name_eng))
+        .collect::<Vec<_>>()
         .join("\n");
 
     replace_text_in_file(&file_path, target_text, &methods_string)?;
@@ -148,31 +147,22 @@ fn fill_params_methods(file_path: &str, method: &Method) -> io::Result<()> {
 
     method.params.iter().enumerate().for_each(|(index, param)| {
         if param._type == "string" {
-            get_params.push(
-                format!(
-                    "std::string {} = get_method_param_as_utf8(paParams, {});",
-                    param.name, index
-                )
-                .to_string(),
-            );
+            get_params.push(format!(
+                "std::string {} = get_method_param_as_utf8(paParams, {});",
+                param.name, index
+            ));
         }
         if param._type == "number" {
-            get_params.push(
-                format!(
-                    "float {} = get_method_param_as_number(paParams, {});",
-                    param.name, index
-                )
-                .to_string(),
-            );
+            get_params.push(format!(
+                "float {} = get_method_param_as_number(paParams, {});",
+                param.name, index
+            ));
         }
         if param._type == "bool" {
-            get_params.push(
-                format!(
-                    "bool {} = get_method_param_as_bool(paParams, {});",
-                    param.name, index
-                )
-                .to_string(),
-            );
+            get_params.push(format!(
+                "bool {} = get_method_param_as_bool(paParams, {});",
+                param.name, index
+            ));
         }
     });
 
@@ -231,15 +221,12 @@ fn fill_for_rust_header(file_path: &str, state: &State) -> io::Result<()> {
         let mut params: Vec<String> = vec![];
 
         method.params.iter().for_each(|param| {
-            if param._type == "string" {
-                params.push(format!("const char* {}", param.name).to_string());
-            }
-            if param._type == "number" {
-                params.push(format!("float {}", param.name).to_string());
-            }
-            if param._type == "bool" {
-                params.push(format!("bool {}", param.name).to_string());
-            }
+            match param._type.as_str() {
+                "string" => params.push(format!("const char* {}", param.name)),
+                "number" => params.push(format!("float {}", param.name)),
+                "bool" => params.push(format!("bool {}", param.name)),
+                _ => {}
+            };
         });
 
         let cur_method = format!(
