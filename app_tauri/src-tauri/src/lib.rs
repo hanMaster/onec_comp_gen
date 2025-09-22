@@ -143,28 +143,27 @@ fn replace_in_main_cpp(dist: &str, state: &State) -> io::Result<()> {
 }
 
 fn fill_params_methods(file_path: &str, method: &Method) -> io::Result<()> {
-    let mut get_params: Vec<String> = vec![];
+    let mut get_params: Vec<String> = Vec::with_capacity(method.params.len());
 
-    method.params.iter().enumerate().for_each(|(index, param)| {
-        if param._type == "string" {
-            get_params.push(format!(
+    method
+        .params
+        .iter()
+        .enumerate()
+        .for_each(|(index, param)| match param._type.as_str() {
+            "string" => get_params.push(format!(
                 "std::string {} = get_method_param_as_utf8(paParams, {});",
                 param.name, index
-            ));
-        }
-        if param._type == "number" {
-            get_params.push(format!(
+            )),
+            "number" => get_params.push(format!(
                 "float {} = get_method_param_as_number(paParams, {});",
                 param.name, index
-            ));
-        }
-        if param._type == "bool" {
-            get_params.push(format!(
+            )),
+            "bool" => get_params.push(format!(
                 "bool {} = get_method_param_as_bool(paParams, {});",
                 param.name, index
-            ));
-        }
-    });
+            )),
+            _ => {}
+        });
 
     let replace_str = get_params.join("\n\t");
     replace_text_in_file(
@@ -190,13 +189,13 @@ fn fill_params_methods(file_path: &str, method: &Method) -> io::Result<()> {
     }
 
     if method.call_rust_method {
-        let mut rust_params: Vec<String> = vec![];
+        let mut rust_params: Vec<String> = Vec::with_capacity(method.params.len());
 
         method.params.iter().for_each(|param| {
             if param._type == "string" {
-                rust_params.push(param.name.to_string() + ".c_str()");
+                rust_params.push(format!("{}.c_str()", param.name));
             } else {
-                rust_params.push(param.name.to_string());
+                rust_params.push(param.name.clone());
             }
         });
 
@@ -283,17 +282,14 @@ fn copy_rs_files_for_each_method(dist: &str, state: &State) -> io::Result<()> {
             let method_name = method.name_eng.as_str().to_owned() + "(";
             replace_text_in_file(&dist, "test(", &method_name)?;
 
-            let mut params: Vec<String> = vec![];
+            let mut params: Vec<String> = Vec::with_capacity(method.params.len());
 
             method.params.iter().for_each(|param| {
-                if param._type == "string" {
-                    params.push(format!("{}: *const c_char", param.name));
-                }
-                if param._type == "number" {
-                    params.push(format!("{}: f32", param.name));
-                }
-                if param._type == "bool" {
-                    params.push(format!("{}: bool", param.name));
+                match param._type.as_str() {
+                    "string" => params.push(format!("{}: *const c_char", param.name)),
+                    "number" => params.push(format!("{}: f32", param.name)),
+                    "bool" => params.push(format!("{}: bool", param.name)),
+                    _ => {}
                 }
             });
             let new_text = format!(
@@ -333,15 +329,12 @@ fn copy_rs_files_for_each_method(dist: &str, state: &State) -> io::Result<()> {
             let mut params: Vec<String> = vec![];
             let mut params_without_types: Vec<String> = vec![];
             method.params.iter().for_each(|param| {
-                params_without_types.push(param.name.to_string());
-                if param._type == "string" {
-                    params.push(format!("{}: *const c_char", param.name));
-                }
-                if param._type == "number" {
-                    params.push(format!("{}: f32", param.name));
-                }
-                if param._type == "bool" {
-                    params.push(format!("{}: bool", param.name));
+                params_without_types.push(param.name.clone());
+                match param._type.as_str() {
+                    "string" => params.push(format!("{}: *const c_char", param.name)),
+                    "number" => params.push(format!("{}: f32", param.name)),
+                    "bool" => params.push(format!("{}: bool", param.name)),
+                    _ => {}
                 }
             });
 
