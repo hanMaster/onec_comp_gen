@@ -6,16 +6,16 @@ use regex::Regex;
 
 pub fn copy_directory(source: &str, destination: &str) -> io::Result<()> {
     // Create destination directory if it doesn't exist
-    if !Path::new(&destination).exists() {
-        fs::create_dir_all(&destination)?;
+    if !Path::new(destination).exists() {
+        fs::create_dir_all(destination)?;
     }
 
     // Read source directory entries
-    for entry in fs::read_dir(&source)? {
+    for entry in fs::read_dir(source)? {
         let entry = entry?;
         let entry_path = entry.path();
         let file_name = entry.file_name();
-        let destination_path = Path::new(&destination).join(file_name);
+        let destination_path = Path::new(destination).join(file_name);
 
         if entry_path.is_dir() {
             // Recursively copy subdirectories
@@ -33,9 +33,9 @@ pub fn copy_directory(source: &str, destination: &str) -> io::Result<()> {
 }
 
 pub fn replace_text_in_file(file_path: &str, target_text: &str, new_text: &str) -> io::Result<()> {
-    let content = fs::read_to_string(&file_path)?;
+    let content = fs::read_to_string(file_path)?;
     let new_content = content.replace(target_text, new_text);
-    fs::write(&file_path, new_content)?;
+    fs::write(file_path, new_content)?;
 
     Ok(())
 }

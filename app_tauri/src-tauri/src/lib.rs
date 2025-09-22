@@ -5,7 +5,7 @@ use file_op::{
     copy_directory, exists_base_template, replace_text_in_file, replace_text_in_file_regex,
 };
 use std::time::Instant;
-use std::{env, fs, io, vec};
+use std::{env, fs, io};
 
 fn copy_base_template(source_dir: &str, destination_dir: &str) -> io::Result<()> {
     println!(
@@ -202,7 +202,7 @@ fn fill_params_methods(file_path: &str, method: &Method) -> io::Result<()> {
             .join(", ");
 
         replace_text_in_file(
-            &file_path,
+            file_path,
             "const char* res =  test__call_from_cpp(parm_for_rust.c_str(), f, b);",
             &format!(
                 "const char* res =  {}__call_from_cpp({});",
@@ -266,7 +266,7 @@ fn copy_cpp_files_for_each_method(dist: &str, state: &State) -> io::Result<()> {
     })?;
 
     let source = format!("{base_url}rust.h");
-    fill_for_rust_header(&source, &state)?;
+    fill_for_rust_header(&source, state)?;
 
     Ok(())
 }
