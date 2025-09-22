@@ -245,19 +245,19 @@ fn fill_for_rust_header(file_path: &str, state: &State) -> io::Result<()> {
 }
 
 fn copy_cpp_files_for_each_method(dist: &str, state: &State) -> io::Result<()> {
-    let base_url = format!("{dist}\\cpp\\source\\impl\\");
+    let base_path = format!("{dist}\\cpp\\source\\impl\\");
     state.methods.iter().try_for_each(|method| {
         // copy source files
-        let source = format!("{base_url}test.cpp");
-        let dist_src = format!("{base_url}{}.cpp", method.name_eng);
+        let source = format!("{base_path}test.cpp");
+        let dist_src = format!("{base_path}{}.cpp", method.name_eng);
         println!("Copying file '{}' to '{}'...", source, dist_src);
         fs::copy(source, &dist_src)?;
         let method_name = format!("{}(", method.name_eng);
         replace_text_in_file(&dist_src, "test(", &method_name)?;
         fill_params_methods(&dist_src, method)?;
         // copy header files
-        let source = format!("{base_url}test.h");
-        let dist_headers = format!("{base_url}{}.h", method.name_eng);
+        let source = format!("{base_path}test.h");
+        let dist_headers = format!("{base_path}{}.h", method.name_eng);
         println!("Copying file '{}' to '{}'...", source, dist_headers);
         fs::copy(source, &dist_headers)?;
         let method_name = format!("{}(", method.name_eng);
@@ -265,7 +265,7 @@ fn copy_cpp_files_for_each_method(dist: &str, state: &State) -> io::Result<()> {
         Ok::<(), io::Error>(())
     })?;
 
-    let source = format!("{base_url}rust.h");
+    let source = format!("{base_path}rust.h");
     fill_for_rust_header(&source, state)?;
 
     Ok(())
