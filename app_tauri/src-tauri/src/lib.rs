@@ -215,10 +215,10 @@ fn fill_params_methods(file_path: &str, method: &Method) -> io::Result<()> {
 }
 
 fn fill_for_rust_header(file_path: &str, state: &State) -> io::Result<()> {
-    let mut methods: Vec<String> = vec![];
+    let mut methods: Vec<String> = Vec::with_capacity(state.methods.len());
 
     state.methods.iter().for_each(|method| {
-        let mut params: Vec<String> = vec![];
+        let mut params: Vec<String> = Vec::with_capacity(method.params.len());
 
         method.params.iter().for_each(|param| {
             match param._type.as_str() {
