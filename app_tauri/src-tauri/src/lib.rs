@@ -284,14 +284,15 @@ fn copy_rs_files_for_each_method(dist: &str, state: &State) -> io::Result<()> {
 
             let mut params: Vec<String> = Vec::with_capacity(method.params.len());
 
-            method.params.iter().for_each(|param| {
-                match param._type.as_str() {
+            method
+                .params
+                .iter()
+                .for_each(|param| match param._type.as_str() {
                     "string" => params.push(format!("{}: *const c_char", param.name)),
                     "number" => params.push(format!("{}: f32", param.name)),
                     "bool" => params.push(format!("{}: bool", param.name)),
                     _ => {}
-                }
-            });
+                });
             let new_text = format!(
                 r#"pub extern "C" fn main({}) -> *const c_char {{
     str_to_cchar("returned value from rust")
