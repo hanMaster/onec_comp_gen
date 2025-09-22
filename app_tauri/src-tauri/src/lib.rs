@@ -390,8 +390,8 @@ fn build(path: &str, state: &str) -> String {
 
     let source = format!("{path}\\base_template");
     if !exists_base_template(&source) {
-        return "В каталоге с конструктором не найден каталог base_template. \
-        Это базовый шаблон. \
+        return "В каталоге с конструктором должен находится каталог base_template. \
+        Это базой шаблон. Он не найден. \
         Скопируйте его в этот каталог из релиза или из папки source в репозитории."
             .to_string();
     }
