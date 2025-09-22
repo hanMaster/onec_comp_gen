@@ -231,11 +231,11 @@ fn fill_for_rust_header(file_path: &str, state: &State) -> io::Result<()> {
 
         let cur_method = format!(
             "extern \"C\" const char* {}__call_from_cpp({});",
-            method.name_eng.as_str(),
+            method.name_eng,
             params.join(", ")
         );
 
-        methods.push(cur_method.clone());
+        methods.push(cur_method);
     });
 
     replace_text_in_file(file_path, "//ВставкаМетодов", &methods.join("\n"))?;
