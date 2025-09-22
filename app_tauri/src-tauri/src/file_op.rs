@@ -4,7 +4,7 @@ use std::path::Path;
 
 use regex::Regex;
 
-pub fn copy_directory(source: String, destination: String) -> io::Result<()> {
+pub fn copy_directory(source: &str, destination: &str) -> io::Result<()> {
     // Create destination directory if it doesn't exist
     if !Path::new(&destination).exists() {
         fs::create_dir_all(&destination)?;
@@ -20,8 +20,8 @@ pub fn copy_directory(source: String, destination: String) -> io::Result<()> {
         if entry_path.is_dir() {
             // Recursively copy subdirectories
             copy_directory(
-                entry_path.to_string_lossy().to_string(),
-                destination_path.to_string_lossy().to_string()
+                entry_path.to_string_lossy().as_ref(),
+                destination_path.to_string_lossy().as_ref(),
             )?;
         } else {
             // Copy files
@@ -32,25 +32,27 @@ pub fn copy_directory(source: String, destination: String) -> io::Result<()> {
     Ok(())
 }
 
-
-pub fn replace_text_in_file(file_path: &String, target_text: String, new_text: String) -> io::Result<()> {
+pub fn replace_text_in_file(file_path: &str, target_text: &str, new_text: &str) -> io::Result<()> {
     let content = fs::read_to_string(&file_path)?;
-    let new_content = content.replace(&target_text, &new_text);
+    let new_content = content.replace(target_text, new_text);
     fs::write(&file_path, new_content)?;
-    
+
     Ok(())
 }
 
-pub fn replace_text_in_file_regex(file_path: &String, pattern: &str, new_text: &str) -> io::Result<()> {
+pub fn replace_text_in_file_regex(
+    file_path: &str,
+    pattern: &str,
+    new_text: &str,
+) -> io::Result<()> {
     let content = fs::read_to_string(file_path)?;
-    let regex = Regex::new(pattern)
-        .map_err(|e| io::Error::new(io::ErrorKind::InvalidInput, e))?;
+    let regex = Regex::new(pattern).map_err(|e| io::Error::new(io::ErrorKind::InvalidInput, e))?;
     let new_content = regex.replace_all(&content, new_text);
     fs::write(file_path, new_content.as_bytes())?;
-    
+
     Ok(())
 }
 
-pub fn exists_base_template(file_path: String) -> bool {
-    Path::new(&file_path).exists()
+pub fn exists_base_template(file_path: &str) -> bool {
+    Path::new(file_path).exists()
 }

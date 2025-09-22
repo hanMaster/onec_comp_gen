@@ -1,9 +1,11 @@
 mod dto;
 mod file_op;
 use dto::{Method, State};
-use file_op::{copy_directory, replace_text_in_file, replace_text_in_file_regex, exists_base_template};
+use file_op::{
+    copy_directory, exists_base_template, replace_text_in_file, replace_text_in_file_regex,
+};
+use std::time::Instant;
 use std::{env, fs, io, vec};
-use tauri::http::method;
 
 fn copy_base_template(source_dir: &str, destination_dir: &str) -> io::Result<()> {
     println!(
@@ -11,12 +13,12 @@ fn copy_base_template(source_dir: &str, destination_dir: &str) -> io::Result<()>
         source_dir, destination_dir
     );
 
-    copy_directory(source_dir.to_string(), destination_dir.to_string())?;
+    copy_directory(source_dir, destination_dir)?;
 
     Ok(())
 }
 
-fn replace_in_class(dist: &String, state: &State) -> io::Result<()> {
+fn replace_in_class(dist: &str, state: &State) -> io::Result<()> {
     let file_path = dist.to_owned() + "\\cpp\\source\\AddInNative.h";
     let target_text = "//ДляВставкиМетодов";
 
@@ -28,12 +30,12 @@ fn replace_in_class(dist: &String, state: &State) -> io::Result<()> {
         .join(",\n\t\t")
         + ",";
 
-    replace_text_in_file(&file_path, target_text.to_string(), methods_string)?;
+    replace_text_in_file(&file_path, target_text, &methods_string)?;
 
     Ok(())
 }
 
-fn replace_in_make_file(dist: &String, state: &State) -> io::Result<()> {
+fn replace_in_make_file(dist: &str, state: &State) -> io::Result<()> {
     let file_path = dist.to_owned() + "\\cpp\\source\\CMakeLists.txt";
     let target_text = "#ВставкаCPPФайлов";
 
@@ -44,12 +46,12 @@ fn replace_in_make_file(dist: &String, state: &State) -> io::Result<()> {
         .collect::<Vec<String>>()
         .join("\n\t");
 
-    replace_text_in_file(&file_path, target_text.to_string(), cpp_files_string)?;
+    replace_text_in_file(&file_path, target_text, &cpp_files_string)?;
 
     Ok(())
 }
 
-fn replace_in_main_cpp(dist: &String, state: &State) -> io::Result<()> {
+fn replace_in_main_cpp(dist: &str, state: &State) -> io::Result<()> {
     let file_path = dist.to_owned() + "\\cpp\\source\\AddInNative.cpp";
     let target_text = "/*ФайлCPPМетодыНаРусскомЯзыке*/";
 
@@ -61,7 +63,7 @@ fn replace_in_main_cpp(dist: &String, state: &State) -> io::Result<()> {
         .join(",\n\t")
         + ",\n";
 
-    replace_text_in_file(&file_path, target_text.to_string(), methods_string)?;
+    replace_text_in_file(&file_path, target_text, &methods_string)?;
 
     let file_path = dist.to_owned() + "\\cpp\\source\\AddInNative.cpp";
     let target_text = "/*ФайлCPPМетодыНаАнглийскомЯзыке*/";
@@ -74,7 +76,7 @@ fn replace_in_main_cpp(dist: &String, state: &State) -> io::Result<()> {
         .join(",\n\t")
         + ",\n";
 
-    replace_text_in_file(&file_path, target_text.to_string(), methods_string)?;
+    replace_text_in_file(&file_path, target_text, &methods_string)?;
 
     let target_text = "//GetNParamsДляВставки";
 
@@ -91,7 +93,7 @@ fn replace_in_main_cpp(dist: &String, state: &State) -> io::Result<()> {
         .collect::<Vec<String>>()
         .join("\n\t");
 
-    replace_text_in_file(&file_path, target_text.to_string(), methods_string)?;
+    replace_text_in_file(&file_path, target_text, &methods_string)?;
 
     let target_text = "//HasRetValДляВставки";
 
@@ -108,7 +110,7 @@ fn replace_in_main_cpp(dist: &String, state: &State) -> io::Result<()> {
         .collect::<Vec<String>>()
         .join("\n\t");
 
-    replace_text_in_file(&file_path, target_text.to_string(), methods_string)?;
+    replace_text_in_file(&file_path, target_text, &methods_string)?;
 
     let target_text = "//CallAsFuncДляВставки";
 
@@ -125,7 +127,7 @@ fn replace_in_main_cpp(dist: &String, state: &State) -> io::Result<()> {
         .collect::<Vec<String>>()
         .join("\n\t");
 
-    replace_text_in_file(&file_path, target_text.to_string(), methods_string)?;
+    replace_text_in_file(&file_path, target_text, &methods_string)?;
 
     let target_text = "//includeВставкаЗаголовковМетодов";
 
@@ -136,12 +138,12 @@ fn replace_in_main_cpp(dist: &String, state: &State) -> io::Result<()> {
         .collect::<Vec<String>>()
         .join("\n");
 
-    replace_text_in_file(&file_path, target_text.to_string(), methods_string)?;
+    replace_text_in_file(&file_path, target_text, &methods_string)?;
 
     Ok(())
 }
 
-fn fill_params_methods(file_path: &String, state: &State, method: &Method) -> io::Result<()> {
+fn fill_params_methods(file_path: &str, method: &Method) -> io::Result<()> {
     let mut get_params: Vec<String> = vec![];
 
     method.params.iter().enumerate().for_each(|(index, param)| {
@@ -177,8 +179,8 @@ fn fill_params_methods(file_path: &String, state: &State, method: &Method) -> io
     let replace_str = get_params.join("\n\t");
     replace_text_in_file(
         file_path,
-        "//ВставкаКодаПолученияПараметровМетода".to_string(),
-        replace_str,
+        "//ВставкаКодаПолученияПараметровМетода",
+        &replace_str,
     )?;
 
     replace_text_in_file_regex(file_path, r"//\+\+\+НачалоПримера[\S\s\n]*?//---", "")?;
@@ -186,8 +188,8 @@ fn fill_params_methods(file_path: &String, state: &State, method: &Method) -> io
     if !method.call_rust_method {
         replace_text_in_file(
             file_path,
-            "free_mem_after_cpp(res);//Освободить память выделенные в Rust, когда она больше не нужна на стороне cpp".to_string(),
-            "".to_string(),
+            "free_mem_after_cpp(res);//Освободить память выделенные в Rust, когда она больше не нужна на стороне cpp",
+            "",
         )?;
 
         replace_text_in_file_regex(
@@ -210,11 +212,11 @@ fn fill_params_methods(file_path: &String, state: &State, method: &Method) -> io
 
         replace_text_in_file(
             &file_path,
-            "const char* res =  test__call_from_cpp(parm_for_rust.c_str(), f, b);".to_string(),
-            format!(
+            "const char* res =  test__call_from_cpp(parm_for_rust.c_str(), f, b);",
+            &format!(
                 "const char* res =  {}__call_from_cpp({});",
-                method.name_eng.as_str(),
-                rust_params.join(", ").to_string()
+                method.name_eng,
+                rust_params.join(", ")
             ),
         )?;
     }
@@ -222,7 +224,7 @@ fn fill_params_methods(file_path: &String, state: &State, method: &Method) -> io
     Ok(())
 }
 
-fn fill_for_rust_header(file_path: &String, state: &State) -> io::Result<()> {
+fn fill_for_rust_header(file_path: &str, state: &State) -> io::Result<()> {
     let mut methods: Vec<String> = vec![];
 
     state.methods.iter().for_each(|method| {
@@ -249,68 +251,52 @@ fn fill_for_rust_header(file_path: &String, state: &State) -> io::Result<()> {
         methods.push(cur_method.clone());
     });
 
-    replace_text_in_file(
-        file_path,
-        "//ВставкаМетодов".to_string(),
-        methods.join("\n").to_string(),
-    )?;
+    replace_text_in_file(file_path, "//ВставкаМетодов", &methods.join("\n"))?;
 
     Ok(())
 }
 
-fn copy_cpp_files_for_each_method(dist: &String, state: &State) -> io::Result<()> {
+fn copy_cpp_files_for_each_method(dist: &str, state: &State) -> io::Result<()> {
     state.methods.iter().try_for_each(|method| {
-        let source = dist.to_owned() + "\\cpp\\source\\impl\\test.cpp";
-        let dist = dist.to_owned() + "\\cpp\\source\\impl\\" + method.name_eng.as_str() + ".cpp";
+        let source = format!("{dist}\\cpp\\source\\impl\\test.cpp");
+        let dist = format!("{dist}\\cpp\\source\\impl\\{}.cpp", method.name_eng);
         println!("Copying file '{}' to '{}'...", source, dist);
         fs::copy(source, &dist)?;
         let method_name = method.name_eng.as_str().to_owned() + "(";
-        replace_text_in_file(
-            &dist.to_string(),
-            "test(".to_string(),
-            method_name.to_string(),
-        )?;
-        fill_params_methods(&dist.to_string(), &state, method)?;
+        replace_text_in_file(&dist, "test(", &method_name)?;
+        fill_params_methods(&dist.to_string(), method)?;
         Ok::<(), io::Error>(())
     })?;
 
     state.methods.iter().try_for_each(|method| {
-        let source = dist.to_owned() + "\\cpp\\source\\impl\\test.h";
-        let dist = dist.to_owned() + "\\cpp\\source\\impl\\" + method.name_eng.as_str() + ".h";
+        let source = format!("{dist}\\cpp\\source\\impl\\test.h");
+        let dist = format!("{dist}\\cpp\\source\\impl\\{}.h", method.name_eng);
         println!("Copying file '{}' to '{}'...", source, dist);
         fs::copy(source, &dist)?;
-        let method_name = method.name_eng.as_str().to_owned() + "(";
-        replace_text_in_file(
-            &dist.to_string(),
-            "test(".to_string(),
-            method_name.to_string(),
-        )?;
+        let method_name = format!("{}(", method.name_eng);
+        replace_text_in_file(&dist, "test(", &method_name)?;
         Ok::<(), io::Error>(())
     })?;
 
-    let source = dist.to_owned() + "\\cpp\\source\\impl\\rust.h";
+    let source = format!("{dist}\\cpp\\source\\impl\\rust.h");
     fill_for_rust_header(&source, &state)?;
 
     Ok(())
 }
 
-fn copy_rs_files_for_each_method(dist: &String, state: &State) -> io::Result<()> {
+fn copy_rs_files_for_each_method(dist: &str, state: &State) -> io::Result<()> {
     state
         .methods
         .iter()
         .filter(|method| method.call_rust_method)
         .try_for_each(|method| {
-            let source = format!("{}\\rust\\src\\impl_test.rs", dist);
+            let source = format!("{dist}\\rust\\src\\impl_test.rs");
             println!("1_{}", source);
-            let dist = format!("{}\\rust\\src\\impl_{}.rs", dist, method.name_eng);
-            println!("Copying file '{}' to '{}'...", source, dist);
+            let dist = format!("{dist}\\rust\\src\\impl_{}.rs", method.name_eng);
+            println!("Copying file '{source}' to '{dist}'...");
             fs::copy(source, &dist)?;
             let method_name = method.name_eng.as_str().to_owned() + "(";
-            replace_text_in_file(
-                &dist.to_string(),
-                "test(".to_string(),
-                method_name.to_string(),
-            )?;
+            replace_text_in_file(&dist, "test(", &method_name)?;
 
             let mut params: Vec<String> = vec![];
 
@@ -347,8 +333,8 @@ fn copy_rs_files_for_each_method(dist: &String, state: &State) -> io::Result<()>
             mods.push(format!("mod impl_{};", method.name_eng));
         });
 
-    let file_path = format!("{}\\rust\\src\\lib.rs", dist);
-    replace_text_in_file(&file_path, "//ВставкаМодулей".to_string(), mods.join("\n"))?;
+    let file_path = format!("{dist}\\rust\\src\\lib.rs");
+    replace_text_in_file(&file_path, "//ВставкаМодулей", &mods.join("\n"))?;
 
     //ВставкаМетодов
 
@@ -387,17 +373,17 @@ pub extern "C" fn {}__call_from_cpp({}) -> *const c_char {{
             methods.push(code);
         });
 
-        let file_path = format!("{}\\rust\\src\\lib.rs", dist);
-        replace_text_in_file(&file_path, "//ВставкаМетодов".to_string(), methods.join("\n"))?;
+    let file_path = format!("{}\\rust\\src\\lib.rs", dist);
+    replace_text_in_file(&file_path, "//ВставкаМетодов", &methods.join("\n"))?;
 
     Ok(())
 }
 
-fn copy_file_and_replace(path: String, state: State) -> io::Result<()> {
-    let source = path.to_owned() + "\\base_template";
-    let dist = path.to_owned() + "\\new_component";
+fn copy_file_and_replace(path: &str, state: State) -> io::Result<()> {
+    let source = format!("{path}\\base_template");
+    let dist = format!("{path}\\new_component");
 
-    copy_base_template(source.as_str(), dist.as_str())?;
+    copy_base_template(&source, &dist)?;
 
     replace_in_class(&dist, &state)?;
 
@@ -416,6 +402,7 @@ fn copy_file_and_replace(path: String, state: State) -> io::Result<()> {
 #[tauri::command]
 fn build(path: &str, state: &str) -> String {
     println!("state {}", state);
+    let start = Instant::now();
 
     let state_struct = match serde_json::from_str::<State>(state) {
         Ok(state) => state,
@@ -425,32 +412,33 @@ fn build(path: &str, state: &str) -> String {
         }
     };
 
-    let source = path.to_owned() + "\\base_template";
-    if !exists_base_template(source.to_string()){
-        return "В каталоге с конструтором должен находится каталог base_template. Это базой шаблон. Он не найден. Скопируйте его в этот каталог из релиза или из папки source в репозитории.".to_string();
+    let source = format!("{path}\\base_template");
+    if !exists_base_template(&source) {
+        return "В каталоге с конструктором должен находится каталог base_template. \
+        Это базой шаблон. Он не найден. \
+        Скопируйте его в этот каталог из релиза или из папки source в репозитории."
+            .to_string();
     }
 
-    match copy_file_and_replace(path.to_string(), state_struct) {
-        Ok(()) => "Завершилось успешно!".to_string(),
+    match copy_file_and_replace(path, state_struct) {
+        Ok(()) => format!("Завершилось успешно! За {:?}", start.elapsed()),
         Err(e) => e.to_string(),
     }
 }
 
 #[tauri::command]
 fn current_dir() -> String {
-
     match env::current_dir() {
         Ok(path) => path.display().to_string(),
         Err(e) => e.to_string(),
     }
-
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
-        .invoke_handler(tauri::generate_handler![build,current_dir])
+        .invoke_handler(tauri::generate_handler![build, current_dir])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
