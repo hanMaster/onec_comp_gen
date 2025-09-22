@@ -143,29 +143,28 @@ fn replace_in_main_cpp(dist: &str, state: &State) -> io::Result<()> {
 }
 
 fn fill_params_methods(file_path: &str, method: &Method) -> io::Result<()> {
-    let mut get_params: Vec<String> = Vec::with_capacity(method.params.len());
-
-    method
+    let replace_str = method
         .params
         .iter()
         .enumerate()
-        .for_each(|(index, param)| match param._type.as_str() {
-            "string" => get_params.push(format!(
+        .map(|(index, param)| match param._type.as_str() {
+            "string" => format!(
                 "std::string {} = get_method_param_as_utf8(paParams, {});",
                 param.name, index
-            )),
-            "number" => get_params.push(format!(
+            ),
+            "number" => format!(
                 "float {} = get_method_param_as_number(paParams, {});",
                 param.name, index
-            )),
-            "bool" => get_params.push(format!(
+            ),
+            "bool" => format!(
                 "bool {} = get_method_param_as_bool(paParams, {});",
                 param.name, index
-            )),
-            _ => {}
-        });
+            ),
+            _ => unreachable!(),
+        })
+        .collect::<Vec<_>>()
+        .join("\n\t");
 
-    let replace_str = get_params.join("\n\t");
     replace_text_in_file(
         file_path,
         "//ВставкаКодаПолученияПараметровМетода",
@@ -189,23 +188,25 @@ fn fill_params_methods(file_path: &str, method: &Method) -> io::Result<()> {
     }
 
     if method.call_rust_method {
-        let mut rust_params: Vec<String> = Vec::with_capacity(method.params.len());
-
-        method.params.iter().for_each(|param| {
-            if param._type == "string" {
-                rust_params.push(format!("{}.c_str()", param.name));
-            } else {
-                rust_params.push(param.name.clone());
-            }
-        });
+        let rust_params = method
+            .params
+            .iter()
+            .map(|param| {
+                if param._type == "string" {
+                    format!("{}.c_str()", param.name)
+                } else {
+                    param.name.clone()
+                }
+            })
+            .collect::<Vec<_>>()
+            .join(", ");
 
         replace_text_in_file(
             &file_path,
             "const char* res =  test__call_from_cpp(parm_for_rust.c_str(), f, b);",
             &format!(
                 "const char* res =  {}__call_from_cpp({});",
-                method.name_eng,
-                rust_params.join(", ")
+                method.name_eng, rust_params
             ),
         )?;
     }
@@ -214,47 +215,49 @@ fn fill_params_methods(file_path: &str, method: &Method) -> io::Result<()> {
 }
 
 fn fill_for_rust_header(file_path: &str, state: &State) -> io::Result<()> {
-    let mut methods: Vec<String> = Vec::with_capacity(state.methods.len());
+    let methods_str = state
+        .methods
+        .iter()
+        .map(|method| {
+            let params = method
+                .params
+                .iter()
+                .map(|param| match param._type.as_str() {
+                    "string" => format!("const char* {}", param.name),
+                    "number" => format!("float {}", param.name),
+                    "bool" => format!("bool {}", param.name),
+                    _ => unreachable!(),
+                })
+                .collect::<Vec<String>>()
+                .join(", ");
 
-    state.methods.iter().for_each(|method| {
-        let mut params: Vec<String> = Vec::with_capacity(method.params.len());
+            format!(
+                "extern \"C\" const char* {}__call_from_cpp({});",
+                method.name_eng, params
+            )
+        })
+        .collect::<Vec<_>>()
+        .join("\n");
 
-        method.params.iter().for_each(|param| {
-            match param._type.as_str() {
-                "string" => params.push(format!("const char* {}", param.name)),
-                "number" => params.push(format!("float {}", param.name)),
-                "bool" => params.push(format!("bool {}", param.name)),
-                _ => {}
-            };
-        });
-
-        let cur_method = format!(
-            "extern \"C\" const char* {}__call_from_cpp({});",
-            method.name_eng,
-            params.join(", ")
-        );
-
-        methods.push(cur_method);
-    });
-
-    replace_text_in_file(file_path, "//ВставкаМетодов", &methods.join("\n"))?;
+    replace_text_in_file(file_path, "//ВставкаМетодов", &methods_str)?;
 
     Ok(())
 }
 
 fn copy_cpp_files_for_each_method(dist: &str, state: &State) -> io::Result<()> {
+    let base_url = format!("{dist}\\cpp\\source\\impl\\");
     state.methods.iter().try_for_each(|method| {
         // copy source files
-        let source = format!("{dist}\\cpp\\source\\impl\\test.cpp");
-        let dist_src = format!("{dist}\\cpp\\source\\impl\\{}.cpp", method.name_eng);
+        let source = format!("{base_url}test.cpp");
+        let dist_src = format!("{base_url}{}.cpp", method.name_eng);
         println!("Copying file '{}' to '{}'...", source, dist_src);
         fs::copy(source, &dist_src)?;
         let method_name = format!("{}(", method.name_eng);
         replace_text_in_file(&dist_src, "test(", &method_name)?;
         fill_params_methods(&dist_src, method)?;
         // copy header files
-        let source = format!("{dist}\\cpp\\source\\impl\\test.h");
-        let dist_headers = format!("{dist}\\cpp\\source\\impl\\{}.h", method.name_eng);
+        let source = format!("{base_url}test.h");
+        let dist_headers = format!("{base_url}{}.h", method.name_eng);
         println!("Copying file '{}' to '{}'...", source, dist_headers);
         fs::copy(source, &dist_headers)?;
         let method_name = format!("{}(", method.name_eng);
@@ -262,7 +265,7 @@ fn copy_cpp_files_for_each_method(dist: &str, state: &State) -> io::Result<()> {
         Ok::<(), io::Error>(())
     })?;
 
-    let source = format!("{dist}\\cpp\\source\\impl\\rust.h");
+    let source = format!("{base_url}rust.h");
     fill_for_rust_header(&source, &state)?;
 
     Ok(())
@@ -282,22 +285,12 @@ fn copy_rs_files_for_each_method(dist: &str, state: &State) -> io::Result<()> {
             let method_name = method.name_eng.as_str().to_owned() + "(";
             replace_text_in_file(&dist, "test(", &method_name)?;
 
-            let mut params: Vec<String> = Vec::with_capacity(method.params.len());
-
-            method
-                .params
-                .iter()
-                .for_each(|param| match param._type.as_str() {
-                    "string" => params.push(format!("{}: *const c_char", param.name)),
-                    "number" => params.push(format!("{}: f32", param.name)),
-                    "bool" => params.push(format!("{}: bool", param.name)),
-                    _ => {}
-                });
+            let params = params_with_types(method);
             let new_text = format!(
                 r#"pub extern "C" fn main({}) -> *const c_char {{
     str_to_cchar("returned value from rust")
 }}"#,
-                params.join(", ")
+                params
             );
             replace_text_in_file_regex(&dist, r"//\+\+\+Заменить[\S\s\n]*?//---", &new_text)?;
 
@@ -305,18 +298,16 @@ fn copy_rs_files_for_each_method(dist: &str, state: &State) -> io::Result<()> {
         })?;
 
     // заменить в lib.rs
-    let mut mods: Vec<String> = vec![];
-
-    state
+    let mods = state
         .methods
         .iter()
         .filter(|method| method.call_rust_method)
-        .for_each(|method| {
-            mods.push(format!("mod impl_{};", method.name_eng));
-        });
+        .map(|method| format!("mod impl_{};", method.name_eng))
+        .collect::<Vec<String>>()
+        .join("\n");
 
     let file_path = format!("{dist}\\rust\\src\\lib.rs");
-    replace_text_in_file(&file_path, "//ВставкаМодулей", &mods.join("\n"))?;
+    replace_text_in_file(&file_path, "//ВставкаМодулей", &mods)?;
 
     //ВставкаМетодов
 
@@ -327,27 +318,21 @@ fn copy_rs_files_for_each_method(dist: &str, state: &State) -> io::Result<()> {
         .iter()
         .filter(|method| method.call_rust_method)
         .for_each(|method| {
-            let mut params: Vec<String> = vec![];
-            let mut params_without_types: Vec<String> = vec![];
-            method.params.iter().for_each(|param| {
-                params_without_types.push(param.name.clone());
-                match param._type.as_str() {
-                    "string" => params.push(format!("{}: *const c_char", param.name)),
-                    "number" => params.push(format!("{}: f32", param.name)),
-                    "bool" => params.push(format!("{}: bool", param.name)),
-                    _ => {}
-                }
-            });
+            let params_without_types = method
+                .params
+                .iter()
+                .map(|param| param.name.clone())
+                .collect::<Vec<_>>()
+                .join(", ");
+
+            let params = params_with_types(method);
 
             let code = format!(
                 r###"#[no_mangle]
 pub extern "C" fn {}__call_from_cpp({}) -> *const c_char {{
     impl_{}::main({})
 }}"###,
-                method.name_eng,
-                params.join(", "),
-                method.name_eng,
-                params_without_types.join(", "),
+                method.name_eng, params, method.name_eng, params_without_types,
             );
             methods.push(code);
         });
@@ -356,6 +341,20 @@ pub extern "C" fn {}__call_from_cpp({}) -> *const c_char {{
     replace_text_in_file(&file_path, "//ВставкаМетодов", &methods.join("\n"))?;
 
     Ok(())
+}
+
+fn params_with_types(method: &Method) -> String {
+    method
+        .params
+        .iter()
+        .map(|param| match param._type.as_str() {
+            "string" => format!("{}: *const c_char", param.name),
+            "number" => format!("{}: f32", param.name),
+            "bool" => format!("{}: bool", param.name),
+            _ => unreachable!(),
+        })
+        .collect::<Vec<_>>()
+        .join(", ")
 }
 
 fn copy_file_and_replace(path: &str, state: State) -> io::Result<()> {
