@@ -6,8 +6,9 @@ use regex::Regex;
 
 pub fn copy_directory(source: &str, destination: &str) -> io::Result<()> {
     // Create destination directory if it doesn't exist
-    if !Path::new(destination).exists() {
-        fs::create_dir_all(destination)?;
+    let dest_path = Path::new(destination);
+    if !dest_path.exists() {
+        fs::create_dir_all(dest_path)?;
     }
 
     // Read source directory entries
@@ -15,7 +16,7 @@ pub fn copy_directory(source: &str, destination: &str) -> io::Result<()> {
         let entry = entry?;
         let entry_path = entry.path();
         let file_name = entry.file_name();
-        let destination_path = Path::new(destination).join(file_name);
+        let destination_path = dest_path.join(file_name);
 
         if entry_path.is_dir() {
             // Recursively copy subdirectories
